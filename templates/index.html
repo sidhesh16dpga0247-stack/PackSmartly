@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Home - PackSmartly{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Smart packing, faster travel prep</h1>
+  <p>Create custom packing lists for any trip — simple, fast and ready to reuse.</p>
+  <div class="cta">
+    {% if session.get('user_id') %}
+      <a href="{{ url_for('dashboard') }}" class="btn">Go to Dashboard</a>
+    {% else %}
+      <a href="{{ url_for('register') }}" class="btn">Create an account</a>
+      <a href="{{ url_for('login') }}" class="btn-ghost">Log in</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

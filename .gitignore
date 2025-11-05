@@ -1,0 +1,44 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+ENV/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# Flask & runtime files
+instance/
+*.log
+
+# SQLite database
+*.db
+*.sqlite3
+
+# Environment variables / secrets
+*.env
+.env.*
+.envrc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Compiled files
+*.so
+
+# Backup files
+*.bak
+*.tmp
+
+# Pytest / coverage
+.coverage
+htmlcov/
+.py

@@ -1,0 +1,42 @@
+/* style.css - simple professional styling */
+
+:root{
+  --accent:#2563eb;
+  --muted:#6b7280;
+  --bg:#f7fafc;
+  --card:#ffffff;
+  --danger:#ef4444;
+}
+
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:var(--bg); margin:0;color:#111}
+.container{max-width:980px;margin:0 auto;padding:20px}
+
+.site-header{background:#fff;border-bottom:1px solid #e6e6e6}
+.header-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+.brand{font-weight:700;color:var(--accent);text-decoration:none;font-size:1.2rem}
+.nav a{margin-left:14px;text-decoration:none;color:var(--muted)}
+.btn, .btn-ghost{display:inline-block;padding:8px 14px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn{background:var(--accent);color:white}
+.btn.full{display:block;width:100%}
+.btn-ghost{border:1px solid #e2e8f0;color:var(--muted);background:transparent;padding:7px 12px}
+
+.main{padding:28px 20px}
+.hero{background:linear-gradient(90deg, #ffffff, #ffffff);padding:36px;border-radius:10px;border:1px solid #eef2ff;text-align:left}
+.hero h1{margin:0 0 10px;font-size:1.6rem}
+.hero p{margin:0 0 18px;color:var(--muted)}
+
+.card{background:var(--card);padding:20px;border-radius:10px;box-shadow:0 6px 18px rgba(16,24,40,0.04);}
+.auth-card{max-width:420px;margin:20px auto}
+.auth-card form{display:grid;gap:12px}
+label{font-size:0.9rem;color:var(--muted)}
+input[type="text"],input[type="email"],input[type="password"]{padding:10px;border:1px solid #e6e8eb;border-radius:8px;width:100%}
+.muted{color:var(--muted);font-size:0.9rem}
+.flash-list{margin-bottom:14px}
+.flash{padding:10px;border-radius:8px;margin-bottom:8px}
+.flash.success{background:#ecfeff;color:#064e3b}
+.flash.info{background:#eef2ff;color:#0f172a}
+.flash.warning{background:#fff7ed;color:#92400e}
+.flash.danger{background:#fff1f2;color:#7f1d1d}
+
+.site-footer{padding:16px 0;color:var(--muted);text-align:center;font-size:0.9rem;margin-top:30px}

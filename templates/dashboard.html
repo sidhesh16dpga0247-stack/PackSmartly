@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - PackSmartly{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Welcome, {{ username }}!</h2>
+  <p>This is your dashboard. Next, we will add the packing-list generator and saving functionality here.</p>
+  <p><a class="btn" href="{{ url_for('index') }}">Explore site</a></p>
+</div>
+{% endblock %}

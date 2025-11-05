@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Register - PackSmartly{% endblock %}
+{% block content %}
+<div class="card auth-card">
+  <h2>Create Account</h2>
+  <form method="POST" novalidate>
+    <label>Username</label>
+    <input type="text" name="username" required value="{{ username|default('') }}">
+    <label>Email</label>
+    <input type="email" name="email" required value="{{ email|default('') }}">
+    <label>Password</label>
+    <input type="password" name="password" required>
+    <label>Confirm password</label>
+    <input type="password" name="confirm" required>
+    <button type="submit" class="btn full">Create account</button>
+  </form>
+  <p class="muted">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+</div>
+{% endblock %}
