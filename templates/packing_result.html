@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Your Packing List{% endblock %}
+
+{% block content %}
+<h2>Packing List for {{ destination }}</h2>
+<p>Trip Duration: {{ duration }} days</p>
+
+<div class="card">
+  {% for category, items in items.items() %}
+    <h3>{{ category }}</h3>
+    <ul>
+      {% for item in items %}
+      <li>
+        <label>
+          <input type="checkbox"> {{ item }}
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
+</div>
+
+<a class="btn" href="/dashboard">Back to Dashboard</a>
+{% endblock %}
