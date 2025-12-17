@@ -256,7 +256,7 @@ def create_list():
             )
         )
         db.commit()
-        return redirect(url_for('packing_result'))
+        return redirect(url_for('dashboard'))
 
     return render_template('create_list.html')
 
