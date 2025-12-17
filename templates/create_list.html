@@ -5,12 +5,16 @@
 <h2>Create Your Packing List</h2>
 
 <div class="card create-list-card">
-
   <form method="POST">
 
     <!-- DESTINATION -->
     <label class="form-label">Destination</label>
-    <input type="text" name="destination" class="form-input" placeholder="Enter where you're traveling..." required>
+    <input type="text"
+           id="destinationInput"
+           name="destination"
+           class="form-input"
+           placeholder="Enter where you're traveling..."
+           required>
 
     <!-- DURATION -->
     <label class="form-label">Trip Duration (days)</label>
@@ -18,29 +22,13 @@
 
     <!-- ACTIVITIES -->
     <label class="form-label">Select Activities</label>
+    <p class="muted small">Activities will appear after you enter a destination.</p>
 
-    <p class="muted small">Choose everything you plan to do on your trip.</p>
-
-    <div class="activity-grid">
-
-      <!-- Each is a checkbox styled as a selectable card -->
-      {% for activity in [
-        'Swimming', 'Hiking', 'Business', 'Gym', 
-        'Photography', 'Road Trip', 'Camping', 'Adventure Sports',
-        'Sightseeing', 'Beach Day', 'Shopping', 'Nightlife',
-        'Museum Tour', 'Running', 'Festival/Concert', 'Cycling'
-      ] %}
-      <label class="activity-card">
-        <input type="checkbox" name="activities" value="{{ activity }}">
-        <span>{{ activity }}</span>
-      </label>
-      {% endfor %}
-
-    </div>
+    <div id="activityGrid" class="activity-grid"></div>
 
     <button class="btn full" type="submit">Generate Packing List ✅</button>
-
   </form>
 </div>
 
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}
