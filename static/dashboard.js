@@ -1,227 +1,206 @@
-// static/dashboard.js
+// ===============================
+// DASHBOARD.JS (FIXED & CLEAN)
+// ===============================
 
-// Render saved trips onto the dashboard
+let CURRENT_TRIP = null;
+let CURRENT_INDEX = null;
+
+// -------------------------------
+// Escape helpers
+// -------------------------------
+function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escapeJsString(s) {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/'/g, "\\'");
+}
+
+// -------------------------------
+// Populate trip list
+// -------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-    const tripsList = document.getElementById("tripsList");
+  const tripsList = document.getElementById("tripsList");
+  tripsList.innerHTML = "";
 
-    // clear existing (safety)
-    tripsList.innerHTML = "";
-
-    TRIPS_DATA.forEach((trip, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-            <button class="btn-ghost" onclick="openTrip(${index})">
-                ${escapeHtml(trip.destination)} (${escapeHtml(String(trip.duration))} days)
-            </button>
-            – ${escapeHtml(trip.created_at)}
-        `;
-        tripsList.appendChild(li);
-    });
+  TRIPS_DATA.forEach((trip, index) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <button class="btn-ghost" onclick="openTrip(${index})">
+        ${escapeHtml(trip.destination)} (${escapeHtml(trip.duration)} days)
+      </button>
+      – ${escapeHtml(trip.created_at)}
+    `;
+    tripsList.appendChild(li);
+  });
 });
 
-let CURRENT_TRIP = null;   // the object being edited
-let CURRENT_INDEX = null;  // index in TRIPS_DATA for that trip
-
-// Helper: escape HTML to avoid injection when injecting text
-function escapeHtml(text) {
-    if (text === null || text === undefined) return "";
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-// Open modal for a trip
+// -------------------------------
+// Open modal
+// -------------------------------
 function openTrip(index) {
-    CURRENT_INDEX = index;
-    // deep copy so edits don't immediately mutate TRIPS_DATA until saved
-    CURRENT_TRIP = JSON.parse(JSON.stringify(TRIPS_DATA[index] || {}));
+  CURRENT_INDEX = index;
+  CURRENT_TRIP = JSON.parse(JSON.stringify(TRIPS_DATA[index]));
 
-    // ensure items object exists
-    if (!CURRENT_TRIP.items || typeof CURRENT_TRIP.items !== "object") {
-        CURRENT_TRIP.items = {};
-    }
+  if (!CURRENT_TRIP.items) CURRENT_TRIP.items = {};
 
-    document.getElementById("modalTitle").innerText =
-        `${CURRENT_TRIP.destination} (${CURRENT_TRIP.duration} days)`;
+  document.getElementById("modalTitle").innerText =
+    `${CURRENT_TRIP.destination} (${CURRENT_TRIP.duration} days)`;
 
-    renderItems();
-
-    document.getElementById("tripModal").style.display = "flex";
-    // clear any previous new item input
-    document.getElementById("newItemInput").value = "";
+  renderItems();
+  document.getElementById("tripModal").style.display = "flex";
+  document.getElementById("newItemInput").value = "";
 }
 
+// -------------------------------
 // Close modal
+// -------------------------------
 document.getElementById("closeModal").onclick = () => {
-    document.getElementById("tripModal").style.display = "none";
-    CURRENT_TRIP = null;
-    CURRENT_INDEX = null;
+  document.getElementById("tripModal").style.display = "none";
+  CURRENT_TRIP = null;
+  CURRENT_INDEX = null;
 };
 
-// Populate modal with items
+// -------------------------------
+// Render checklist items
+// -------------------------------
 function renderItems() {
-    const container = document.getElementById("itemsContainer");
-    container.innerHTML = "";
+  const container = document.getElementById("itemsContainer");
+  container.innerHTML = "";
 
-    // If no categories, show helpful hint
-    if (!CURRENT_TRIP.items || Object.keys(CURRENT_TRIP.items).length === 0) {
-        container.innerHTML = "<p class='muted'>No items in this list. Add custom items below.</p>";
-        return;
-    }
+  if (!CURRENT_TRIP || !CURRENT_TRIP.items || Object.keys(CURRENT_TRIP.items).length === 0) {
+    container.innerHTML = "<p class='muted'>No items yet. Add some below.</p>";
+    return;
+  }
 
-    for (let category in CURRENT_TRIP.items) {
-        // skip non-own props (precaution)
-        if (!CURRENT_TRIP.items.hasOwnProperty(category)) continue;
+  Object.entries(CURRENT_TRIP.items).forEach(([category, items]) => {
+    const h4 = document.createElement("h4");
+    h4.textContent = category;
+    h4.style.marginTop = "18px";
+    container.appendChild(h4);
 
-        const sec = document.createElement("div");
-        sec.className = "category-section";
-        sec.innerHTML = `<h4>${escapeHtml(category)}</h4>`;
+    items.forEach((item, idx) => {
+      const label = document.createElement("label");
+      label.className = "check-item";
 
-        CURRENT_TRIP.items[category].forEach((item, idx) => {
-            const row = document.createElement("div");
-            row.className = "item-row";
-            // build row safely
-            row.innerHTML = `
-                <span>${escapeHtml(item)}</span>
-                <button class="btn-ghost small remove-btn" style="color:red"
-                        onclick="removeItem('${escapeJsString(category)}', ${idx})">
-                    Remove
-                </button>
-            `;
-            sec.appendChild(row);
-        });
+      label.innerHTML = `
+        <input type="checkbox"
+          ${item.checked ? "checked" : ""}
+          onchange="toggleItem('${escapeJsString(category)}', ${idx}, this.checked)">
+        <span class="check-text">${escapeHtml(item.name)}</span>
+      `;
 
-        container.appendChild(sec);
-    }
+      container.appendChild(label);
+    });
+  });
 }
 
-// Helper to escape category names inside JS string (for onclick inline)
-function escapeJsString(s) {
-    if (s === null || s === undefined) return "";
-    return String(s).replace(/'/g, "\\'");
+// -------------------------------
+// Toggle checkbox (local only)
+// -------------------------------
+function toggleItem(category, index, checked) {
+  if (!CURRENT_TRIP || !CURRENT_TRIP.items[category]) return;
+  CURRENT_TRIP.items[category][index].checked = checked;
 }
 
-// Remove item
-function removeItem(category, index) {
-    if (!CURRENT_TRIP || !CURRENT_TRIP.items || !CURRENT_TRIP.items[category]) return;
-    // remove the item
-    CURRENT_TRIP.items[category].splice(index, 1);
-
-    // if category is now empty, delete it
-    if (CURRENT_TRIP.items[category].length === 0) {
-        delete CURRENT_TRIP.items[category];
-    }
-
-    renderItems();
-}
-
+// -------------------------------
 // Add custom item
+// -------------------------------
 document.getElementById("addItemBtn").onclick = () => {
-    const input = document.getElementById("newItemInput");
-    const newItem = input.value.trim();
-    if (!newItem) {
-        alert("Enter an item name before adding.");
-        return;
-    }
+  const input = document.getElementById("newItemInput");
+  const value = input.value.trim();
+  if (!value) return alert("Enter an item name.");
 
-    if (!CURRENT_TRIP.items["Custom Items"]) {
-        CURRENT_TRIP.items["Custom Items"] = [];
-    }
+  if (!CURRENT_TRIP.items["Custom Items"]) {
+    CURRENT_TRIP.items["Custom Items"] = [];
+  }
 
-    CURRENT_TRIP.items["Custom Items"].push(newItem);
-    input.value = "";
-    renderItems();
+  CURRENT_TRIP.items["Custom Items"].push({
+    name: value,
+    checked: false
+  });
+
+  input.value = "";
+  renderItems();
 };
 
-// Save updated trip to DB via API
+// -------------------------------
+// Save changes to backend
+// -------------------------------
 document.getElementById("saveChangesBtn").onclick = async () => {
-    if (!CURRENT_TRIP || CURRENT_INDEX === null) {
-        alert("No trip to save.");
-        return;
+  if (!CURRENT_TRIP) return;
+
+  const btn = document.getElementById("saveChangesBtn");
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try {
+    const res = await fetch("/api/update-list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: CURRENT_TRIP.id,
+        items: CURRENT_TRIP.items
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      TRIPS_DATA[CURRENT_INDEX] = JSON.parse(JSON.stringify(CURRENT_TRIP));
+      alert("Checklist saved!");
+      document.getElementById("tripModal").style.display = "none";
+    } else {
+      alert("Save failed.");
     }
-
-    const saveBtn = document.getElementById("saveChangesBtn");
-    saveBtn.disabled = true;
-    saveBtn.innerText = "Saving...";
-
-    try {
-        // ensure payload contains id and items (server requires)
-        const payload = {
-            id: CURRENT_TRIP.id,
-            items: CURRENT_TRIP.items,
-            destination: CURRENT_TRIP.destination,
-            duration: CURRENT_TRIP.duration,
-            activities: CURRENT_TRIP.activities
-        };
-
-        const res = await fetch("/api/update-list", {
-            method: "POST",
-            credentials: "same-origin", // ensure cookies (session) are sent
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            // update the in-page TRIPS_DATA so future opens show saved data
-            TRIPS_DATA[CURRENT_INDEX] = JSON.parse(JSON.stringify(CURRENT_TRIP));
-            alert("Changes saved!");
-            document.getElementById("tripModal").style.display = "none";
-            CURRENT_TRIP = null;
-            CURRENT_INDEX = null;
-        } else {
-            const msg = (data && data.error) ? data.error : "Error saving changes";
-            alert("Save failed: " + msg);
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Network error while saving changes.");
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerText = "Save Changes";
-    }
+  } catch (e) {
+    console.error(e);
+    alert("Network error.");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Save Changes";
+  }
 };
 
-// PDF download using jsPDF
+// -------------------------------
+// PDF Export (checklist-aware)
+// -------------------------------
 document.getElementById("downloadPdfBtn").onclick = () => {
-    if (!CURRENT_TRIP) {
-        alert("No trip loaded.");
-        return;
-    }
+  if (!CURRENT_TRIP) return;
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
 
-    let y = 15;
-    doc.setFontSize(14);
-    doc.text(`Packing List for ${CURRENT_TRIP.destination}`, 10, y);
-    y += 8;
-    doc.setFontSize(11);
+  doc.setFontSize(14);
+  doc.text(`Packing List – ${CURRENT_TRIP.destination}`, 10, y);
+  y += 10;
+  doc.setFontSize(11);
 
-    for (let category in CURRENT_TRIP.items) {
-        if (!CURRENT_TRIP.items.hasOwnProperty(category)) continue;
+  Object.entries(CURRENT_TRIP.items).forEach(([category, items]) => {
+    doc.text(category + ":", 10, y);
+    y += 6;
 
-        doc.text(category + ":", 10, y);
-        y += 6;
+    items.forEach(item => {
+      if (y > 275) {
+        doc.addPage();
+        y = 20;
+      }
+      const mark = item.checked ? "[x]" : "[ ]";
+      doc.text(`${mark} ${item.name}`, 14, y);
+      y += 6;
+    });
 
-        CURRENT_TRIP.items[category].forEach(item => {
-            // small guard to handle page overflow
-            if (y > 275) {
-                doc.addPage();
-                y = 20;
-            }
-            doc.text("- " + item, 14, y);
-            y += 6;
-        });
+    y += 6;
+  });
 
-        y += 6;
-    }
-
-    // safe filename
-    const safeName = (CURRENT_TRIP.destination || "trip").replace(/[^a-z0-9_\-]/gi, "_").toLowerCase();
-    doc.save(`packing_list_${safeName}.pdf`);
+  const safeName = CURRENT_TRIP.destination.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  doc.save(`packing_list_${safeName}.pdf`);
 };

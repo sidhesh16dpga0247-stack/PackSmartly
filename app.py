@@ -41,6 +41,15 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrapper
 
+def wrap_items(items):
+    return [{"name": item, "checked": False} for item in items]
+
+def normalize_items(items):
+    for cat, values in items.items():
+        if values and isinstance(values[0], str):
+            items[cat] = [{"name": v, "checked": False} for v in values]
+    return items
+
 # --------------------------------------------------
 # DESTINATION LOGIC (SCALABLE – 200+ supported)
 # --------------------------------------------------
@@ -119,9 +128,9 @@ def get_weather(destination):
 # --------------------------------------------------
 def generate_packing_list(destination, duration, activities):
     base_items = {
-        "Essentials": ["Phone", "Charger", "Wallet", "Passport", "Travel Tickets"],
-        "Clothing": ["Underwear", "Socks", "T-Shirts", "Pants", "Jacket"],
-        "Toiletries": ["Toothbrush", "Toothpaste", "Deodorant", "Soap"],
+        "Essentials": wrap_items(["Phone", "Charger", "Wallet", "Passport", "Travel Tickets"]),
+        "Clothing": wrap_items(["Underwear", "Socks", "T-Shirts", "Pants", "Jacket"]),
+        "Toiletries": wrap_items(["Toothbrush", "Toothpaste", "Deodorant", "Soap"]),
     }
 
     activity_items = {
@@ -139,25 +148,31 @@ def generate_packing_list(destination, duration, activities):
         "Desert Safari": ["Scarf", "Sunscreen"],
     }
 
-    generated = {k: list(v) for k, v in base_items.items()}
+    generated = base_items.copy()
 
     for act in activities:
         if act in activity_items:
-            generated.setdefault("Activity Gear", []).extend(activity_items[act])
+            generated.setdefault("Activity Gear", []).extend(
+                wrap_items(activity_items[act])
+            )
 
     try:
         days = max(1, int(duration))
     except:
         days = 1
 
-    generated["Clothing"].append(f"{days} pairs of socks")
-    generated["Clothing"].append(f"{days} sets of underwear")
+    generated["Clothing"].append({"name": f"{days} pairs of socks", "checked": False})
+    generated["Clothing"].append({"name": f"{days} sets of underwear", "checked": False})
 
     weather = get_weather(destination)
     if weather == "hot":
-        generated.setdefault("Weather Gear", []).extend(["Cap", "Sunscreen"])
+        generated.setdefault("Weather Gear", []).extend(
+            wrap_items(["Cap", "Sunscreen"])
+        )
     elif weather == "cold":
-        generated.setdefault("Weather Gear", []).extend(["Gloves", "Thermal Wear"])
+        generated.setdefault("Weather Gear", []).extend(
+            wrap_items(["Gloves", "Thermal Wear"])
+        )
 
     return generated
 
@@ -221,7 +236,7 @@ def dashboard():
         "destination": r["destination"],
         "duration": r["duration"],
         "activities": r["activities"].split(",") if r["activities"] else [],
-        "items": json.loads(r["items"]),
+       "items": normalize_items(json.loads(r["items"])),
         "created_at": r["created_at"]
     } for r in rows]
 
