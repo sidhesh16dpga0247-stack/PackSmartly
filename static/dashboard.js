@@ -90,12 +90,24 @@ function renderItems() {
       const label = document.createElement("label");
       label.className = "check-item";
 
-      label.innerHTML = `
-        <input type="checkbox"
-          ${item.checked ? "checked" : ""}
-          onchange="toggleItem('${escapeJsString(category)}', ${idx}, this.checked)">
-        <span class="check-text">${escapeHtml(item.name)}</span>
-      `;
+     label.innerHTML = `
+      <input type="checkbox"
+        ${item.checked ? "checked" : ""}
+        onchange="toggleItem('${escapeJsString(category)}', ${idx}, this.checked)">
+
+      <span class="check-text">${escapeHtml(item.name)}</span>
+
+      <button class="btn-ghost"
+        onclick="renameItem('${escapeJsString(category)}', ${idx})">
+        Rename
+      </button>
+
+      <button class="btn-ghost"
+        onclick="deleteItem('${escapeJsString(category)}', ${idx})">
+        Delete
+      </button>
+    `;
+
 
       container.appendChild(label);
     });
@@ -204,3 +216,97 @@ document.getElementById("downloadPdfBtn").onclick = () => {
   const safeName = CURRENT_TRIP.destination.replace(/[^a-z0-9]/gi, "_").toLowerCase();
   doc.save(`packing_list_${safeName}.pdf`);
 };
+
+document.getElementById("renameTripBtn").onclick = async () => {
+  if (!CURRENT_TRIP) return;
+
+  const newName = prompt(
+    "Enter new destination name:",
+    CURRENT_TRIP.destination
+  );
+
+  if (!newName || newName.trim() === "") return;
+
+  try {
+    const res = await fetch("/api/rename-list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: CURRENT_TRIP.id,
+        destination: newName.trim()
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      CURRENT_TRIP.destination = newName.trim();
+      TRIPS_DATA[CURRENT_INDEX].destination = newName.trim();
+
+      document.getElementById("modalTitle").innerText =
+        `${CURRENT_TRIP.destination} (${CURRENT_TRIP.duration} days)`;
+
+      alert("Trip renamed successfully!");
+      location.reload(); // simple + safe for IA
+    } else {
+      alert("Rename failed.");
+    }
+  } catch (err) {
+    alert("Network error.");
+  }
+};
+
+document.getElementById("deleteTripBtn").onclick = async () => {
+  if (!CURRENT_TRIP) return;
+
+  const confirmDelete = confirm(
+    "Are you sure you want to delete this packing list? This action cannot be undone."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch("/api/delete-list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: CURRENT_TRIP.id
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      alert("Packing list deleted.");
+      location.reload();
+    } else {
+      alert("Delete failed.");
+    }
+  } catch (err) {
+    alert("Network error.");
+  }
+};
+
+function renameItem(category, index) {
+  const item = CURRENT_TRIP.items[category][index];
+
+  const newName = prompt("Rename item:", item.name);
+  if (!newName || newName.trim() === "") return;
+
+  item.name = newName.trim();
+  renderItems();
+}
+
+function deleteItem(category, index) {
+  const confirmDelete = confirm("Delete this item?");
+  if (!confirmDelete) return;
+
+  CURRENT_TRIP.items[category].splice(index, 1);
+
+  // If category becomes empty, remove it
+  if (CURRENT_TRIP.items[category].length === 0) {
+    delete CURRENT_TRIP.items[category];
+  }
+
+  renderItems();
+}

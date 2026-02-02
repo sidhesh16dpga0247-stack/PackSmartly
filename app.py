@@ -303,5 +303,41 @@ def api_update_list():
     return jsonify({"success": True})
 
 # --------------------------------------------------
+# API: RENAME LIST
+# --------------------------------------------------
+@app.route('/api/rename-list', methods=['POST'])
+@login_required
+def api_rename_list():
+    data = request.get_json()
+    db = get_db()
+
+    db.execute(
+        "UPDATE packing_lists SET destination=? WHERE id=? AND user_id=?",
+        (data["destination"], data["id"], session['user_id'])
+    )
+    db.commit()
+
+    return jsonify({"success": True})
+
+
+# --------------------------------------------------
+# API: DELETE LIST
+# --------------------------------------------------
+@app.route('/api/delete-list', methods=['POST'])
+@login_required
+def api_delete_list():
+    data = request.get_json()
+    db = get_db()
+
+    db.execute(
+        "DELETE FROM packing_lists WHERE id=? AND user_id=?",
+        (data["id"], session['user_id'])
+    )
+    db.commit()
+
+    return jsonify({"success": True})
+
+
+# --------------------------------------------------
 if __name__ == '__main__':
     app.run(debug=True)
